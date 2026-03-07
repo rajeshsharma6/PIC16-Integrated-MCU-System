@@ -64,7 +64,7 @@ The firmware follows a modular assembly design for high maintainability:
 
 
 
-## 📐 The Mathematics of Speed
+## The Mathematics of Speed
 To achieve exact RPM values, the system uses a **500kHz Timer3 clock** (1:2 prescaler). 
 Each count represents **2$\mu s$**. With 2 pulses per revolution, the formula is:
 $$RPM = \frac{60 \times 1,000,000}{4 \times T} = \frac{15,000,000}{T}$$ 
