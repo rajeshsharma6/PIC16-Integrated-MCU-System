@@ -1,14 +1,13 @@
 # PIC16F18877 Integrated MCU Multi-Peripheral System
 ### Lab 4: Integrated MCU Multi-Peripheral System
 
-## 📝 Project Overview
+## Project Overview
 This project is a comprehensive embedded system designed for the **PIC16F18877** microcontroller. It demonstrates the simultaneous integration of analog sensing, PWM power modulation, high-precision timing for tachometry, and asynchronous serial communication.
 
 The system features a dual-mode interface (ADC vs. DIP) to control fan speed and display brightness, while providing real-time RPM telemetry to a PC.
 
----
 
-## 🚀 Key Modules & Functionality
+##  Key Modules & Functionality
 
 ### 1. Dual-Control PWM Engine
 * [cite_start]**Peripheral:** CCP2 using Timer4[cite: 175].
@@ -33,7 +32,7 @@ The system features a dual-mode interface (ADC vs. DIP) to control fan speed and
 
 ---
 
-## 📂 File Structure
+## File Structure
 
 The firmware follows a modular assembly design for high maintainability:
 
