@@ -30,7 +30,7 @@ The system features a dual-mode interface (ADC vs. DIP) to control fan speed and
 * [cite_start]**Telemetry:** Transmits a clear string (`"RPM = 1234\r\n"`) to a PC every 1 second[cite: 4].
 * **Visual Feedback:** LED **RB2** toggles to indicate active data transmission.
 
----
+
 
 ## File Structure
 
@@ -46,9 +46,9 @@ The firmware follows a modular assembly design for high maintainability:
 | `mode.inc` | Button debounce and state machine for Mode Control (RE1). |
 | `seven_seg.inc`| BCD to 7-Segment decoding table. |
 
----
 
-## 📍 Hardware Configuration
+
+## Hardware Configuration
 
 ### Pin Mapping
 | Pin | Function | Peripheral | Logic |
@@ -64,8 +64,6 @@ The firmware follows a modular assembly design for high maintainability:
 
 
 
----
-
 ## 📐 The Mathematics of Speed
 [cite_start]To achieve exact RPM values, the system uses a **500kHz Timer3 clock** (1:2 prescaler)[cite: 26, 37]. 
 Each count represents **2$\mu s$**. With 2 pulses per revolution, the formula is:
@@ -73,10 +71,8 @@ Each count represents **2$\mu s$**. With 2 pulses per revolution, the formula is
 
 [cite_start]The value **15,000,000 (0xE4E1C0)** is stored as a 24-bit dividend for the division routine [cite: 21-22].
 
----
-
-## 🛠 Build Instructions
+🛠 Build Instructions
 1. Open the project in **MPLAB X IDE**.
-2. Select **pic-as** as the assembler.
+2. Select **GPASM** as the assembler.
 3. Link all `.inc` files in the `main.asm` file.
 4. Program the **PIC16F18877** using a PICkit 4 or Snap debugger.
