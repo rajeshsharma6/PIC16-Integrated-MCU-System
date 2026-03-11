@@ -27,9 +27,6 @@
 ;	 Bit 5-4: 11 (1:8 Prescaler)
 ;	 Bit 0: 1 (ON)
     
-
-;TIMER_OVERFLOW_COUNTER EQU 0x79
-;TIMER_TOGGLE EQU 0x7A
     
     
 init_timer1
@@ -51,8 +48,10 @@ init_timer1
     MOVWF   T1CON
     
 ;   Set counter and overflow counter = 0
-    BANKSEL TIMER_TOGGLE
-    CLRF TIMER_TOGGLE
+    BANKSEL TIMER_TOGGLE_BUZZER
+    CLRF TIMER_TOGGLE_BUZZER
+    BANKSEL TIMER_TOGGLE_UART
+    CLRF TIMER_TOGGLE_UART
     CLRF TIMER_OVERFLOW_COUNTER
     
     RETURN
@@ -91,9 +90,12 @@ timer1_run
 
 ;   2 overflows 
     CLRF    TIMER_OVERFLOW_COUNTER      ; Reset  oveflow counter
-    BANKSEL TIMER_TOGGLE
+    BANKSEL TIMER_TOGGLE_BUZZER
     MOVLW   b'00000001'
-    XORWF   TIMER_TOGGLE, F		; Toggle		
+    XORWF   TIMER_TOGGLE_BUZZER, F	; Toggle
+    BANKSEL TIMER_TOGGLE_UART
+    MOVLW   b'00000001'
+    XORWF   TIMER_TOGGLE_UART, F	
     RETURN             
 
 

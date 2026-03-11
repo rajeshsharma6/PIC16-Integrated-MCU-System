@@ -103,8 +103,8 @@ alarm_on
     BSF     LATB, 1 
     
 ;   Check if 1 second passed
-    BANKSEL TIMER_TOGGLE
-    BTFSS TIMER_TOGGLE , 0   
+    BANKSEL TIMER_TOGGLE_BUZZER
+    BTFSS TIMER_TOGGLE_BUZZER , 0   
     GOTO buzz_off		; 0
     
 buzz_on				; 1
@@ -125,8 +125,8 @@ alarm_off
     BANKSEL CCP1CON ; Bit 7: 0 CCP1 is disabled by default 
     BCF CCP1CON, 7
     
-    BANKSEL TIMER_TOGGLE
-    CLRF TIMER_TOGGLE	    ;reset 
+    BANKSEL TIMER_TOGGLE_BUZZER
+    CLRF TIMER_TOGGLE_BUZZER	    ;reset 
     RETURN
     
     

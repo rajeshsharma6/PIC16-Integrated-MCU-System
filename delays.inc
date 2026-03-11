@@ -1,8 +1,4 @@
-;DELAY_S	EQU 0x76
-;DELAY_MS       EQU 0x77
-;DELAY_US       EQU 0x78
 
-    
 ;Outer Loop - 1000ms (100*(10,100+3)+2 overhead+2 return)
 Delay_1000milli
     MOVLW   d'100'          ; 1 cycle

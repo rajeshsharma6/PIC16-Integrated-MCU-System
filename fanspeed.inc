@@ -1,6 +1,8 @@
 ;   FANSPEED & 7 SEGMENT BRIGHTNESS CONTROL
 ;   Pin 16: RC1
     
+;    FAN RATED SPEED 4800 +- 15%
+    
 ;   Similar to PWM used for Buzzer circuit 
 ;   Using Timer4 with CCP2 module for pulse generation in PWM mode
 
@@ -9,7 +11,7 @@
 ;	0.001s = [(T4PR) +1] x 4 x (1/4,000,000) x (4)
 ;   T4PR = 249  
     
-;   T2CON REGISTER 
+;   T4CON REGISTER 
 ;	Bit 7: 1 (ON) 
 ;	Bit 6-4: 010 (1:4) Prescaler
     
@@ -74,6 +76,7 @@ init_fanspeed_PWM
     
 
     ;  Set to MAX by default for 1000 milliseconds
+    ; Necessary since fan startup voltage is 4V    
     BANKSEL CCPR2H 
     MOVLW   0xFF            ; 255 = 100% Duty Cycle
     MOVWF   CCPR2H 

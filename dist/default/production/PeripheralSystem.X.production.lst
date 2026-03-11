@@ -1,0 +1,1230 @@
+gplink-1.5.2 #1309 (Jul  2 2017)
+Copyright (c) 1998-2016 gputils project
+Listing File Generated: 3-11-2026  01:58:09
+
+
+Address  Value    Disassembly              Source
+-------  -----    -----------              ------
+                                           ;WORKING MAIN
+                                           LIST    p=PIC16F18877		
+                                               #INCLUDE <p16f18877.inc>
+                                                   LIST
+
+                                           ;==========================================================================
+                                           ; Build date : Mar 21 2017
+                                           ;  MPASM PIC16F18877 processor include
+                                           ; 
+                                           ;  (c) Copyright 1999-2017 Microchip Technology, All rights reserved
+                                           ;==========================================================================
+
+                                                   NOLIST
+                                               
+                                               ; CONFIG1
+                                               __CONFIG _CONFIG1, _FEXTOSC_HS & _RSTOSC_EXT1X & _CLKOUTEN_OFF & _CSWEN_OFF & _FCMEN_OFF
+                                               ; CONFIG2
+                                               __CONFIG _CONFIG2, _MCLRE_ON & _PWRTE_OFF & _LPBOREN_OFF & _BOREN_OFF & _BORV_LO & _ZCD_OFF & _PPS1WAY_OFF & _STVREN_ON
+                                               ; CONFIG3
+                                               __CONFIG _CONFIG3, _WDTCPS_WDTCPS_31 & _WDTE_OFF & _WDTCWS_WDTCWS_7 & _WDTCCS_SC
+                                               ; CONFIG4
+                                               __CONFIG _CONFIG4, _WRT_OFF & _SCANE_not_available & _LVP_ON
+                                               ; CONFIG5
+                                               __CONFIG _CONFIG5, _CP_OFF & _CPD_OFF
+                                               
+                                           ; Common
+                                           ADC_4BIT       EQU 0x70
+                                           ADC_H8BIT      EQU 0x71   
+                                           ADC_L2BIT      EQU 0x72    
+                                           DIP_4BIT       EQU 0x73  
+                                           SEVEN_SEG_4BIT EQU 0x74
+                                           DELAY_S	       EQU 0x75
+                                           DELAY_MS       EQU 0x76
+                                           DELAY_US       EQU 0x77
+                                           TIMER_OVERFLOW_COUNTER EQU 0x78
+                                           TIMER_TOGGLE_BUZZER    EQU 0x79
+                                           TIMER_TOGGLE_UART      EQU 0x7A    
+                                           MODE           EQU 0x7B
+
+                                           ;Bank 0	 (Uart and Tach)  
+                                           PULSE_L	       EQU 0x20    
+                                           PULSE_H	       EQU 0x21    
+                                           TACH_RPML      EQU 0x22    
+                                           TACH_RPMH      EQU 0x23
+                                           TACH_toBCDL    EQU 0x24
+                                           TACH_toBCDH    EQU 0x25
+
+                                           DIGIT_1000     EQU 0x26    
+                                           DIGIT_100      EQU 0x27    
+                                           DIGIT_10       EQU 0x28    
+                                           DIGIT_1        EQU 0x29
+                                           	
+                                           LOOP_COUNT     EQU 0x2A
+                                           	   
+                                            
+                                               ORG 0x00
+000000   29f8     goto    0x01f8               GOTO begin
+                                            
+                                               #INCLUDE <adc.inc>
+                                           ;   ADCON0 Register
+                                           ;	Bit 7: ADON: ADC Enable (1 - Enabled)
+                                           ;	Bit 4: ADCS: ADC Clock Selection (0 = Clock supplied from oscillator pin 13)
+                                           ;	Bit 2: ADFRMO: ADC results alignment (0 = ADRESH <7:0>, ADRESL <1:0>) LEFT JUSTIFIED       
+                                           ;	Bit 0: ADGO: ADC Conversion Status (0 = conversion completed , 1 = Start conversion cycle)
+
+                                           ;   ADPCH: ADC POSITIVE CHANNEL SELECTION REGISTER (000000 = ANA0) 
+                                              
+                                           ;   ADREF: ADC REFERENCE SELECTION REGISTER 
+                                           ;	Bit 1-0: ADPREF:  Positive Voltage Reference  (00 = VDD)
+                                           ;	Bit 4: ADNREF:  Negative Voltage Reference (0 = VSS)
+
+                                              
+                                               
+                                           init_adc
+                                           ;   ADCON0 
+000001   0141     movlb   0x01                 BANKSEL ADCON0
+000002   3080     movlw   0x80                 MOVLW b'10000000'
+000003   0093     movwf   0x13                 MOVWF ADCON0
+                                               
+                                           ;   ADPCH
+000004   0141     movlb   0x01                 BANKSEL ADPCH
+000005   019e     clrf    0x1e                 CLRF ADPCH
+                                               
+                                           ;   ADREF
+000006   0141     movlb   0x01                 BANKSEL ADREF
+000007   019a     clrf    0x1a                 CLRF ADREF
+                                               
+000008   0008     return                       RETURN
+                                               
+                                           adc_convert
+000009   0141     movlb   0x01                 BANKSEL ADCON0
+00000a   1413     bsf     0x13, 0x0            BSF     ADCON0, 0	; Set Bit 0 (ADGO) to 1 to start conversion
+
+                                           adc_conversionCycle
+00000b   1813     btfsc   0x13, 0x0            BTFSC ADCON0, 0	; Check if ADC still converting (Is Bit 0 (ADGO) = 1)
+00000c   280b     goto    0x000b               GOTO adc_conversionCycle ; yes
+                                               
+00000d   0141     movlb   0x01                 BANKSEL ADRESH	 ;contains converted 8 Bit ADC value
+00000e   080d     movf    0x0d, 0x0            MOVF    ADRESH, W
+00000f   00f1     movwf   0x71                 MOVWF ADC_H8BIT	 ;For PWM CCPR2H
+000010   080c     movf    0x0c, 0x0            MOVF ADRESL , W
+000011   00f2     movwf   0x72                 MOVWF ADC_L2BIT	 ;For PWM CCPR2L
+
+000012   0008     return                       RETURN
+
+                                           adc_4bit
+000013   0141     movlb   0x01                 BANKSEL ADRESH	
+000014   080d     movf    0x0d, 0x0            MOVF    ADRESH, W
+000015   00f0     movwf   0x70                 MOVWF ADC_4BIT
+                                               
+                                               ; Shift right 4 times (Divide by 16)
+000016   36f0     lsrf    0x70, 0x1            lsrf    ADC_4BIT, f      
+000017   36f0     lsrf    0x70, 0x1            lsrf    ADC_4BIT, f      
+000018   36f0     lsrf    0x70, 0x1            lsrf    ADC_4BIT, f      
+000019   36f0     lsrf    0x70, 0x1            lsrf    ADC_4BIT, f
+00001a   0008     return                       RETURN
+                                               
+                                               #INCLUDE <buzzer.inc>
+                                           ;   Buzzer Config 
+                                           ;   Pin 38 : RB5 
+                                           ;   If ADC_4BIT >= 12
+                                           ;	RB1: High (Yellow LED ON)
+                                           ;	RB5: High 1s, Low 1s
+                                               
+                                           ;   Driving Circuit
+                                           ;   Speaker Resistance = 8ohms , V/R = 625mA
+                                           ;   Maximum Pin output current = 25mA, 
+                                           ;   NPN Transistor 2N4401: Ic = B x Ib
+                                           ;   Ib = (5V - 0.7V) / 1k ? 4.3 mA
+
+                                           ;   Audible Frequencies 20hz- 20Hz
+                                           ;   For 4MHz Oscillator, each instruction cycle is 1µs:
+                                           ;   Output Sound at 1kHz
+                                           ;   Therefore frequency divider -> Period = 1ms
+                                           ;   Toggle High: 0.5ms  (500 instruction cycles each)
+                                           ;   Toggle Low: 0.5ms  (500 instruction cycles each)
+                                               
+                                               
+                                           ;   Using Timer2 with CCP module for pulse generation in PWM mode
+
+                                           ;   Programmable Prescalar 1:4 
+                                           ;   PWM Period = [(T2PR) + 1] x 4 x TOSC x (TMR2 Prescale Value)
+                                           ;	0.001s = [(T2PR) +1] x 4 x (1/4,000,000) x (4)
+                                           ;   T2PR = 249  
+                                               
+                                           ;   T2CON REGISTER 
+                                           ;	Bit 7: 1 (ON) 
+                                           ;	Bit 6-4: 010 (1:4)
+                                               
+                                           ;    CCP1CON REGISTER 
+                                           ;	Bit 7: 1 CCP1 is enabled 
+                                           ;	Bit 4: 0 Right Aligned FMT	
+                                           ;	Bit 3-0: 1111  PWM Mode	
+                                               
+                                           ;   PWM DUTY CYLE CCPRxH:CCPRxL (500)
+                                           ;    bits 9:8 = 01 7:0 = 1111 0100
+                                           ;    CCPR1H = 00000001
+                                           ;    CCPR1L = 11110100
+                                               
+                                           ;    PERIPHERAL PIN SELECT OUTPUT: RxyPPS REGISTER 
+                                           ;    RB5PPS Bits 5-0 = 0x09
+                                               
+                                           ;    T2CLKCON REGISTER
+                                           ;    Bit 3-0; 0001 = FOSC/4
+                                               
+                                           ;   SETUP FOR PWM OPERATION
+                                           ;   1. RxyPPS REGISTER -> Route CCP1 to RB5
+                                           ;   2. PR2 REGISTER
+                                           ;   3. CCPR1H:CCPR1L
+                                           ;   4. CCP1CON REGISTER
+                                           ;   5. T2CLKCON, T2CON
+                                           ;   6. CCP1CON CLR bit 7
+                                           ;    
+                                               
+                                           init_buzzer_PWM
+                                               
+00001b   017e     movlb   0x3e                 BANKSEL RB5PPS
+00001c   3009     movlw   0x09                 MOVLW 0x09
+00001d   009d     movwf   0x1d                 MOVWF RB5PPS
+                                               
+00001e   0145     movlb   0x05                 BANKSEL T2PR
+00001f   30f9     movlw   0xf9                 MOVLW D'249'
+000020   008d     movwf   0x0d                 MOVWF T2PR
+                                               
+000021   0146     movlb   0x06                 BANKSEL CCPR1H 
+000022   3001     movlw   0x01                 MOVLW B'00000001'
+000023   008d     movwf   0x0d                 MOVWF CCPR1H 
+                                               
+000024   30f4     movlw   0xf4                 MOVLW B'11110100'
+000025   008c     movwf   0x0c                 MOVWF CCPR1L
+                                               
+000026   0146     movlb   0x06                 BANKSEL CCP1CON 
+000027   308f     movlw   0x8f                 MOVLW B'10001111' 
+000028   008e     movwf   0x0e                 MOVWF CCP1CON
+                                               
+000029   0145     movlb   0x05                 BANKSEL T2CLKCON
+00002a   3001     movlw   0x01                 MOVLW b'00000001'
+00002b   0090     movwf   0x10                 MOVWF T2CLKCON
+                                               
+00002c   0145     movlb   0x05                 BANKSEL T2CON
+00002d   30a0     movlw   0xa0                 MOVLW b'10100000'
+00002e   008e     movwf   0x0e                 MOVWF T2CON
+                                               
+00002f   0146     movlb   0x06                 BANKSEL CCP1CON ; Bit 7: 0 CCP1 is disabled by default 
+000030   138e     bcf     0x0e, 0x7            BCF CCP1CON, 7
+000031   0008     return                       RETURN
+                                                
+                                           ; 12 = 1100, 13 = 1101, 14 = 1110, 15 = 1111
+                                           ; Any number >= 12 will have Bit 3 and Bit 2 set    
+                                           check_alarmState
+000032   0140     movlb   0x00                 BANKSEL ADC_4BIT
+000033   1df0     btfss   0x70, 0x3            BTFSS ADC_4BIT, 3 
+000034   2842     goto    0x0042               GOTO alarm_off
+                                               
+000035   1d70     btfss   0x70, 0x2            BTFSS ADC_4BIT, 2
+000036   2842     goto    0x0042               GOTO alarm_off
+
+                                           alarm_on
+                                           ;   LED ON
+000037   0140     movlb   0x00                 BANKSEL LATB
+000038   1497     bsf     0x17, 0x1            BSF     LATB, 1 
+                                               
+                                           ;   Check if 1 second passed
+000039   0140     movlb   0x00                 BANKSEL TIMER_TOGGLE_BUZZER
+00003a   1c79     btfss   0x79, 0x0            BTFSS TIMER_TOGGLE_BUZZER , 0   
+00003b   283f     goto    0x003f               GOTO buzz_off		; 0
+                                               
+                                           buzz_on				; 1
+00003c   0146     movlb   0x06                 BANKSEL CCP1CON ; Bit 7: 1 CCP1 enabled
+00003d   178e     bsf     0x0e, 0x7            BSF CCP1CON, 7
+00003e   0008     return                       RETURN
+
+                                           buzz_off    
+00003f   0146     movlb   0x06                 BANKSEL CCP1CON 
+000040   138e     bcf     0x0e, 0x7            BCF CCP1CON, 7
+000041   0008     return                       RETURN
+                                               
+                                           alarm_off    
+                                           ;   LED OFF
+000042   0140     movlb   0x00                 BANKSEL LATB
+000043   1097     bcf     0x17, 0x1            BCF     LATB, 1 
+                                               
+000044   0146     movlb   0x06                 BANKSEL CCP1CON ; Bit 7: 0 CCP1 is disabled by default 
+000045   138e     bcf     0x0e, 0x7            BCF CCP1CON, 7
+                                               
+000046   0140     movlb   0x00                 BANKSEL TIMER_TOGGLE_BUZZER
+000047   01f9     clrf    0x79                 CLRF TIMER_TOGGLE_BUZZER	    ;reset 
+000048   0008     return                       RETURN
+                                               
+                                               
+                                               
+                                              
+
+
+                                               #INCLUDE <config.inc>
+                                           ;   PIN ASSIGNMENT
+                                           ;   TRISx: Input (1), Output (0)
+                                           ;   ANSELx: Analog (1), Digital (0) 
+                                           ; PORTA 
+                                           ;	RA0 - Input (Analog) : ADC Channel 0
+                                           ;	RA4 - Input (Digital): Tachometer (MOVED FROM RC0)
+
+                                           ;   PORTB
+                                           ;	RB0 - Output (Digital): Active-low LED (RED) : DIP - ON, ADC - OFF
+                                           ;	RB1 - Output (Digital): Active-high LED (YELLOW) : Alarm - ON    
+                                           ;	RB2 - Output (Digital): Active-high LED (GREEN) : Transmitting - ON    
+                                           ;	RB5 - Output (Dgital): Buzzer
+                                           ;   PORTC
+                                           ;	
+                                           ;	RC1 - Output : PWM fan speed and 7 SEG brightness 
+                                           ;	RC2 - Input (Digital): DIP Pin 1 (LSB)
+                                           ;	RC3 - Input (Digital): DIP Pin 2  
+                                           ;	RC4 - Input (Digital): DIP Pin 3     
+                                           ;	RC5 - Input (Digital): DIP Pin 4 (MSB)
+                                           ;	RC6 - Output (Digital): UART TX (To USB RXD)
+                                           ;	RC7 - Input (Digital): UART RX (From USB TXD)
+                                           ;   PORTD
+                                           ;	RD0 - Output (Digital): 7-SEG A	
+                                           ;	RD1 - Output (Digital): 7-SEG B
+                                           ;	RD2 - Output (Digital): 7-SEG C
+                                           ;	RD3 - Output (Digital): 7-SEG D
+                                           ;	RD4 - Output (Digital): 7-SEG E
+                                           ;	RD5 - Output (Digital): 7-SEG F
+                                           ;	RD6 - Output (Digital): 7-SEG G
+                                           ;	RD7 - Output (Digital): 7-SEG DP
+                                           ;   PORTE
+                                           ;	RE0 - Input (Digital): Reset
+                                           ;	RE1 - Input (Digital): Active-low Control Mode Select
+                                               
+                                               
+                                               
+                                           init_ports    
+                                           ;   PORTA
+000049   0140     movlb   0x00                 BANKSEL TRISA
+00004a   3011     movlw   0x11                 MOVLW B'00010001'	; Set RA0, RA4
+00004b   0091     movwf   0x11                 MOVWF TRISA
+00004c   017e     movlb   0x3e                 BANKSEL ANSELA
+00004d   3001     movlw   0x01                 MOVLW B'00000001'    ; RA0=1 (analog), RA4 digital
+00004e   00b8     movwf   0x38                 MOVWF ANSELA         ; 
+
+                                           ;   PORT B
+00004f   0140     movlb   0x00                 BANKSEL LATB
+000050   0197     clrf    0x17                 CLRF LATB
+000051   0140     movlb   0x00                 BANKSEL TRISB
+000052   0192     clrf    0x12                 CLRF TRISB		; Make all PORTB pins outputs
+000053   017e     movlb   0x3e                 BANKSEL ANSELB	
+000054   01c3     clrf    0x43                 CLRF ANSELB		; Make all PORTB pins digital
+                                               
+                                           ;   PORTC
+000055   0140     movlb   0x00                 BANKSEL TRISC
+000056   30bd     movlw   0xbd                 MOVLW B'10111101'	 ; Set RC1 & RC6 as only Output
+000057   0093     movwf   0x13                 MOVWF TRISC
+000058   017e     movlb   0x3e                 BANKSEL ANSELC
+000059   01ce     clrf    0x4e                 CLRF ANSELC		 ; Make all PORTC pins digital
+                                               
+                                           ;   PORTD - 7 SEG
+00005a   0140     movlb   0x00                 BANKSEL TRISD
+00005b   0194     clrf    0x14                 CLRF TRISD		 ; Make all PORTD pins outputs
+00005c   017e     movlb   0x3e                 BANKSEL ANSELD
+00005d   01d9     clrf    0x59                 CLRF ANSELD		 ; Make all PORTD pins digital
+00005e   0140     movlb   0x00                 BANKSEL LATD		    
+00005f   0199     clrf    0x19                 CLRF LATD		 ; Turn OFF 7-Seg
+                                               
+                                           ;   PORTE
+000060   0140     movlb   0x00                 BANKSEL TRISE
+000061   3003     movlw   0x03                 MOVLW B'00000011'	 ; Set RE0 & RE1 to input
+000062   0095     movwf   0x15                 MOVWF TRISE
+000063   017e     movlb   0x3e                 BANKSEL ANSELE
+000064   01e4     clrf    0x64                 CLRF ANSELE		 ; Make all PORTE pins digital
+                                               
+000065   0008     return                       RETURN
+                                               #INCLUDE <delays.inc>
+
+                                           ;Outer Loop - 1000ms (100*(10,100+3)+2 overhead+2 return)
+                                           Delay_1000milli
+000066   3064     movlw   0x64                 MOVLW   d'100'          ; 1 cycle
+000067   00f5     movwf   0x75                 MOVWF   DELAY_S            ; 1 cycle - Address 0x21 counter
+                                           d_outerloop
+000068   206c     call    0x006c               CALL    Delay_10milli   ; 10,100us
+000069   0bf5     decfsz  0x75, 0x1            DECFSZ  DELAY_S, 1         ; 1 cycle
+00006a   2868     goto    0x0068               goto    d_outerloop     ; 2 cycles
+00006b   0008     return                       return                  ; 2 cycles
+                                           	
+                                           ;Middle Loop - 10.1ms (20 iterations * (502 + 3) + 2 cycles overhead +2 return
+                                           Delay_10milli
+00006c   3014     movlw   0x14                 MOVLW   d'20'           ; 1 cycle
+00006d   00f6     movwf   0x76                 MOVWF   DELAY_MS            ; 1 cycle - Address 0x22 counter
+                                           d_middleloop
+00006e   2072     call    0x0072               CALL    Delay_500micro  ; 502us 
+00006f   0bf6     decfsz  0x76, 0x1            DECFSZ  DELAY_MS, 1         ; 1 cycle
+000070   286e     goto    0x006e               goto    d_middleloop    ; 2 cycles
+000071   0008     return                       return		    ; 2 cycles
+                                           	
+                                           	
+                                           ; Inner Loop - 500µs  (168 iterations * 3 cycles) + 2 cycles overhead +2 return
+                                           Delay_500micro
+000072   30a3     movlw   0xa3                 MOVLW d'163'
+000073   00f7     movwf   0x77                 MOVWF DELAY_US    
+                                           d_innerloop
+000074   0bf7     decfsz  0x77, 0x1            DECFSZ DELAY_US,1 
+000075   2874     goto    0x0074               goto d_innerloop
+000076   0008     return                       return
+
+
+                                               #INCLUDE <dip.inc>
+                                           ; DIP 1 - PORTC2 | DIP 2 - PORTC3 | DIP 3 - PORTC4 | DIP 4 - PORTC5 
+                                           ; PORTC = xx xx RC5 RC4 RC3 RC2 xx xx
+                                           ; DIP_4BIT = xx xx xx xx RC5 RC4 RC3 RC2
+                                               
+                                               
+                                             
+                                           read_dip
+000077   0140     movlb   0x00                 BANKSEL PORTC
+000078   080e     movf    0x0e, 0x0            MOVF PORTC, W
+000079   393c     andlw   0x3c                 ANDLW B'00111100'  ; Zero non-DIP bits
+00007a   00f3     movwf   0x73                 MOVWF DIP_4BIT
+                                               
+                                               ; Shift right 2 times
+00007b   36f3     lsrf    0x73, 0x1            lsrf    DIP_4BIT, f      
+00007c   36f3     lsrf    0x73, 0x1            lsrf    DIP_4BIT, f      
+00007d   0008     return                       RETURN
+
+
+                                               #INCLUDE <fanspeed.inc>
+                                           ;   FANSPEED & 7 SEGMENT BRIGHTNESS CONTROL
+                                           ;   Pin 16: RC1
+                                               
+                                           ;    FAN RATED SPEED 4800 +- 15%
+                                               
+                                           ;   Similar to PWM used for Buzzer circuit 
+                                           ;   Using Timer4 with CCP2 module for pulse generation in PWM mode
+
+                                           ;   Programmable Prescalar 1:4 
+                                           ;   PWM Period = [(T4PR) + 1] x 4 x TOSC x (TMR2 Prescale Value)
+                                           ;	0.001s = [(T4PR) +1] x 4 x (1/4,000,000) x (4)
+                                           ;   T4PR = 249  
+                                               
+                                           ;   T2CON REGISTER 
+                                           ;	Bit 7: 1 (ON) 
+                                           ;	Bit 6-4: 010 (1:4) Prescaler
+                                               
+                                               
+                                           ;    CCP2CON REGISTER 
+                                           ;	Bit 7: 1 CCP2 is enabled 
+                                           ;	Bit 4: 1 LEFT!!! Aligned FMT	
+                                           ;	Bit 3-0: 1111  PWM Mode	
+                                               
+                                           ;   PWM DUTY CYLE CCPRxH:CCPRxL (500)
+                                           ;    bits 15:8 = 01 7:6 = 1111 0100
+                                           ;    CCPR2H = ADRESH
+                                           ;    CCPR2L = ADRESL
+                                               
+                                           ;    PERIPHERAL PIN SELECT OUTPUT: RxyPPS REGISTER 
+                                           ;    RC1PPS Bits 5-0 = 0x0A
+                                               
+                                           ;    T4CLKCON REGISTER
+                                           ;    Bit 3-0; 0001 = FOSC/4
+                                               
+                                               
+                                           ;     CCPTMRS0 REGISTER (HANDLES CCP1/TIMER2 AND CCP2/TIMER4)
+                                           ;	C3TSETl[5;4] =10	    TACH CCP3 uses timer1
+                                           ;	C2TSEL[3:2] = 10      CCP2 uses Timer4
+                                           ;	C1TSEL[1:0] = 01    CCP1 uses Timer2
+                                               
+                                               
+                                           ;   SETUP FOR PWM OPERATION
+                                           ;   1. RxyPPS REGISTER -> Route CCP2 to RC1
+                                           ;   2. PR2 REGISTER
+                                           ;   3. CCPR1H:CCPR1L
+                                           ;   4. CCP2CON REGISTER
+                                           ;   5. T4CLKCON, T4CON
+                                           ;   6. CCP2CON CLR bit 7
+                                           ;    
+                                               
+                                           init_fanspeed_PWM
+                                               
+00007e   017e     movlb   0x3e                 BANKSEL RC1PPS
+00007f   300a     movlw   0x0a                 MOVLW 0x0A
+000080   00a1     movwf   0x21                 MOVWF RC1PPS
+                                               
+000081   0145     movlb   0x05                 BANKSEL T4PR
+000082   30f9     movlw   0xf9                 MOVLW D'249'
+000083   0093     movwf   0x13                 MOVWF T4PR 
+                                               
+000084   0146     movlb   0x06                 BANKSEL CCP2CON 
+000085   309f     movlw   0x9f                 MOVLW B'10011111' 
+000086   0092     movwf   0x12                 MOVWF CCP2CON
+                                               
+000087   0144     movlb   0x04                 BANKSEL CCPTMRS0
+000088   3029     movlw   0x29                 MOVLW   B'00101001'     
+000089   009e     movwf   0x1e                 MOVWF   CCPTMRS0
+                                               
+00008a   0145     movlb   0x05                 BANKSEL T4CLKCON
+00008b   3001     movlw   0x01                 MOVLW b'00000001'
+00008c   0096     movwf   0x16                 MOVWF T4CLKCON
+                                               
+00008d   0145     movlb   0x05                 BANKSEL T4CON
+00008e   30a0     movlw   0xa0                 MOVLW b'10100000'
+00008f   0094     movwf   0x14                 MOVWF T4CON
+                                               
+
+                                               ;  Set to MAX by default for 1000 milliseconds
+                                               ; Necessary since fan startup voltage is 4V    
+000090   0146     movlb   0x06                 BANKSEL CCPR2H 
+000091   30ff     movlw   0xff                 MOVLW   0xFF            ; 255 = 100% Duty Cycle
+000092   0091     movwf   0x11                 MOVWF   CCPR2H 
+000093   3000     movlw   0x00                 MOVLW   0x00            ; Low bits 0
+000094   0090     movwf   0x10                 MOVWF   CCPR2L
+000095   2066     call    0x0066               CALL Delay_1000milli
+000096   0008     return                       RETURN
+                                                
+                                           adjust_fanspeed
+000097   0140     movlb   0x00                 BANKSEL ADC_H8BIT   ; <15:8> MSB
+000098   0871     movf    0x71, 0x0            MOVF    ADC_H8BIT, W
+000099   0146     movlb   0x06                 BANKSEL CCPR2H
+00009a   0091     movwf   0x11                 MOVWF   CCPR2H
+
+                                               ; <7:6> LSB
+00009b   0140     movlb   0x00                 BANKSEL ADC_L2BIT
+00009c   0872     movf    0x72, 0x0            MOVF    ADC_L2BIT, W
+00009d   0146     movlb   0x06                 BANKSEL CCPR2L
+00009e   0090     movwf   0x10                 MOVWF   CCPR2L
+00009f   0008     return                       RETURN
+                                               
+                                               
+                                               #INCLUDE <mode.inc>
+                                           ;   RE1 - Active-low (High, Low when pressed)
+
+
+                                            
+                                           press_button
+0000a0   0140     movlb   0x00                 BANKSEL PORTE
+0000a1   1890     btfsc   0x10, 0x1            BTFSC PORTE, 1	; Check if button pressed (Pressed: RE1 = 0)
+0000a2   0008     return                       RETURN		; (Not Pressed)
+                                               
+                                           ;   Debounce Delay
+0000a3   206c     call    0x006c               CALL Delay_10milli	
+                                               
+0000a4   0140     movlb   0x00                 BANKSEL PORTE
+0000a5   1890     btfsc   0x10, 0x1            BTFSC PORTE, 1	; Check if still pressed
+0000a6   0008     return                       RETURN		; False trigger
+0000a7   0140     movlb   0x00                 BANKSEL MODE
+0000a8   3001     movlw   0x01                 MOVLW   0x01
+0000a9   06fb     xorwf   0x7b, 0x1            XORWF   MODE, F	; Toggle MODE
+                                              
+                                           release
+0000aa   0140     movlb   0x00                 BANKSEL PORTE
+0000ab   1c90     btfss   0x10, 0x1            BTFSS PORTE, 1	; Check if button released (RE1=1)
+0000ac   28aa     goto    0x00aa               GOTO release
+0000ad   206c     call    0x006c               CALL Delay_10milli
+0000ae   0008     return                       RETURN
+                                               
+                                               
+                                           mode_select
+0000af   0140     movlb   0x00                 BANKSEL MODE
+0000b0   087b     movf    0x7b, 0x0            MOVF    MODE, W
+0000b1   1903     btfsc   0x03, 0x2            BTFSC   STATUS, Z    ; Is MODE = 0? (DIP Mode)
+0000b2   28b8     goto    0x00b8               GOTO    mode_dip
+
+
+                                           mode_adc                ; If MODE = 1 
+0000b3   0140     movlb   0x00                 BANKSEL LATB
+0000b4   1417     bsf     0x17, 0x0            BSF     LATB, 0      ; RB0 HIGH = LED OFF 
+0000b5   0870     movf    0x70, 0x0            MOVF    ADC_4BIT, W  ; Load ADC result
+0000b6   00f4     movwf   0x74                 MOVWF   SEVEN_SEG_4BIT
+0000b7   0008     return                       RETURN
+
+                                           mode_dip                ; If MODE = 0 
+0000b8   0140     movlb   0x00                 BANKSEL LATB
+0000b9   1017     bcf     0x17, 0x0            BCF     LATB, 0      ; RB0 LOW = LED ON 
+0000ba   0873     movf    0x73, 0x0            MOVF    DIP_4BIT, W		
+0000bb   00f4     movwf   0x74                 MOVWF   SEVEN_SEG_4BIT      
+0000bc   0008     return                       RETURN
+
+
+                                               
+                                           ; check_reset
+                                           ; RE0 is active-HIGH: pin = 1 when button pressed, 0 when released.
+                                           ; Uses RESET instruction for a clean full restart (all SFRs = POR values).
+                                           check_reset
+0000bd   0140     movlb   0x00                 BANKSEL PORTE
+0000be   1c10     btfss   0x10, 0x0            BTFSS   PORTE, 0        ; skip if RE0 = 1 (button pressed, active-HIGH)
+0000bf   0008     return                       RETURN                  ; RE0 = 0 -> not pressed -> return
+0000c0   0001     reset                        RESET                   ; software reset: restarts from ORG 0x00
+                                               #INCLUDE <seven_seg_disp.inc>
+
+
+                                            
+                                           disp_seven_seg
+0000c1   0874     movf    0x74, 0x0            MOVF  SEVEN_SEG_4BIT, W
+0000c2   20c6     call    0x00c6               CALL seven_seg_decoder ; Place 7 segment pattern into W
+                                               
+0000c3   0140     movlb   0x00                 BANKSEL PORTD             
+0000c4   0099     movwf   0x19                 MOVWF LATD          ; Send the bit pattern to the 7-segment pins
+0000c5   0008     return                       RETURN
+                                              
+                                           seven_seg_decoder
+0000c6   0782     addwf   0x02, 0x1            ADDWF PCL, f         ; Jump forward by the amount in SEVEN_SEG_4BIT
+                                               
+                                           ;   Common Cathode display (1 = Segment ON)
+0000c7   343f     retlw   0x3f                 RETLW b'00111111'    ; 0
+0000c8   3406     retlw   0x06                 RETLW b'00000110'    ; 1
+0000c9   345b     retlw   0x5b                 RETLW b'01011011'    ; 2
+0000ca   344f     retlw   0x4f                 RETLW b'01001111'    ; 3
+0000cb   3466     retlw   0x66                 RETLW b'01100110'    ; 4
+0000cc   346d     retlw   0x6d                 RETLW b'01101101'    ; 5
+0000cd   347d     retlw   0x7d                 RETLW b'01111101'    ; 6
+0000ce   3407     retlw   0x07                 RETLW b'00000111'    ; 7
+0000cf   347f     retlw   0x7f                 RETLW b'01111111'    ; 8
+0000d0   346f     retlw   0x6f                 RETLW b'01101111'    ; 9
+0000d1   3477     retlw   0x77                 RETLW b'01110111'    ; A (10)
+0000d2   347c     retlw   0x7c                 RETLW b'01111100'    ; B (11)
+0000d3   3439     retlw   0x39                 RETLW b'00111001'    ; C (12)
+0000d4   345e     retlw   0x5e                 RETLW b'01011110'    ; D (13)
+0000d5   3479     retlw   0x79                 RETLW b'01111001'    ; E (14)
+0000d6   3471     retlw   0x71                 RETLW b'01110001'    ; F (15)
+0000d7   0008     return                       RETURN
+                                               #INCLUDE <tach.inc>
+                                           ;   Tachometer
+                                           ;   Initally used pulse timing with CCP3 Capture mode and Timer3 external clock pulse. 
+                                           ;   
+                                           ;   PULSE COUNTING: 
+                                           ;   PIN  6: RA4
+                                           ;   10k? pull-up resistor to +5V to produce clean pulses.
+                                           ;   The tach signal on RC0 connected to timer3 input via PPS
+                                           ;   Timer 3 configured as counter, increments by 1 for every rising edge on RC0
+                                           ;   Integrate with timer1 TIMER_TOGGLE for 1s intervals
+                                               
+                                           ;   get_fanSpeed 
+                                           ;	Detect when TIMER_TOGGLE != 0, 
+                                           ;	stop timer3, 
+                                           ;	count copied to pulse_H:pulse_L 
+                                           ;	restart timer   
+                                               
+                                           ;   convert_to_rpm 
+                                           ;   Revolutions per second = number of pulses counted in 1 second/2
+                                           ;   Revolutions per minutes = RPS x 60 = pulses counted x 30    
+                                           ;	This can be done by left shift 5 times (x32) (LSLF and RLF)
+                                           ;	    Returns RPM that is always 2/32 higher 
+                                           ;	Repeated Addition: Loop 30 times and add value to itself
+                                               
+                                               
+                                           ; CONFIG
+                                           ;   PPS Routing to clock input T3CKI 
+                                           ;   REGISTER T3CKIPPS 
+                                           ;   RA4 = 0x04 
+                                           ;    
+                                           ;   REGISTER T3CLK 
+                                           ;	BIT 3-0 : 0000 T3CKIPPS
+                                           ;    
+                                           ;   REGISTER T3CON
+                                           ;	Bit 5-4: 00 1:1 Prescaler 
+                                           ;	Bit 2: 0  synchronize external clock input
+                                           ;	Bit 1: 1 RD16 All 16 bits of Timer1 can be read simultaneously (TMR1H is buffered)
+                                           ;	Bit 0: 1 ENABLE
+
+                                           ;   Reset counter and overflow flag  
+                                           ;   TMR3H:TMR3L = 0
+                                               
+                                           ;   Clear TRM3IF:Timer3 Overflow Interrupt Flag bit PIR4 bit 2
+                                           ;   Reset Variables  
+
+                                           init_tach
+                                               ; Unlock PPS before writing T3CKIPPS
+0000d8   017d     movlb   0x3d                 BANKSEL PPSLOCK
+0000d9   3055     movlw   0x55                 MOVLW   0x55
+0000da   008f     movwf   0x0f                 MOVWF   PPSLOCK
+0000db   30aa     movlw   0xaa                 MOVLW   0xAA
+0000dc   008f     movwf   0x0f                 MOVWF   PPSLOCK
+0000dd   100f     bcf     0x0f, 0x0            BCF     PPSLOCK, 0          ; PPSLOCKED = 0 (writable)
+                                               
+0000de   017d     movlb   0x3d                 BANKSEL T3CKIPPS 
+0000df   3004     movlw   0x04                 MOVLW 0x04
+0000e0   0094     movwf   0x14                 MOVWF T3CKIPPS
+                                               
+                                                ; Lock PPS
+0000e1   017d     movlb   0x3d                 BANKSEL PPSLOCK
+0000e2   3055     movlw   0x55                 MOVLW   0x55
+0000e3   008f     movwf   0x0f                 MOVWF   PPSLOCK
+0000e4   30aa     movlw   0xaa                 MOVLW   0xAA
+0000e5   008f     movwf   0x0f                 MOVWF   PPSLOCK
+0000e6   140f     bsf     0x0f, 0x0            BSF     PPSLOCK, 0          ; PPSLOCKED = 1
+                                               
+0000e7   0144     movlb   0x04                 BANKSEL T3CLK
+0000e8   3000     movlw   0x00                 MOVLW B'00000000' 
+0000e9   0097     movwf   0x17                 MOVWF T3CLK
+                                               
+0000ea   0144     movlb   0x04                 BANKSEL T3CON 
+0000eb   3003     movlw   0x03                 MOVLW B'00000011' 
+0000ec   0094     movwf   0x14                 MOVWF T3CON
+                                               
+0000ed   0144     movlb   0x04                 BANKSEL TMR3H 
+0000ee   0193     clrf    0x13                 CLRF TMR3H 
+0000ef   0192     clrf    0x12                 CLRF TMR3L
+                                               
+0000f0   014e     movlb   0x0e                 BANKSEL PIR4
+0000f1   1110     bcf     0x10, 0x2            BCF     PIR4, 2
+                                               
+0000f2   0140     movlb   0x00                 BANKSEL PULSE_H
+0000f3   01a1     clrf    0x21                 CLRF    PULSE_H
+0000f4   01a0     clrf    0x20                 CLRF    PULSE_L
+
+0000f5   0140     movlb   0x00                 BANKSEL TACH_RPMH
+0000f6   01a3     clrf    0x23                 CLRF    TACH_RPMH
+0000f7   01a2     clrf    0x22                 CLRF    TACH_RPML
+
+                                               
+                                               
+0000f8   0008     return                       RETURN
+                                               
+                                           get_fan_speed
+
+0000f9   0140     movlb   0x00                 BANKSEL TIMER_TOGGLE_UART
+0000fa   1c7a     btfss   0x7a, 0x0            BTFSS   TIMER_TOGGLE_UART, 0   
+0000fb   0008     return                       RETURN			; 0
+0000fc   28fd     goto    0x00fd               GOTO    read_rps		; 1 (1 sec passed)
+                                               
+                                           read_rps
+                                               
+0000fd   0144     movlb   0x04                 BANKSEL T3CON
+0000fe   1014     bcf     0x14, 0x0            BCF     T3CON, 0		; Stop timer T3COn bit 0 = 0 
+                                               
+                                               ; Small delay for Timer3 to settle
+0000ff   2072     call    0x0072               CALL Delay_500micro
+                                               
+                                           ;   Store in register
+000100   0144     movlb   0x04                 BANKSEL TMR3L
+000101   0812     movf    0x12, 0x0            MOVF    TMR3L, W
+000102   0140     movlb   0x00                 BANKSEL PULSE_L
+000103   00a0     movwf   0x20                 MOVWF   PULSE_L
+
+000104   0144     movlb   0x04                 BANKSEL TMR3H
+000105   0813     movf    0x13, 0x0            MOVF    TMR3H, W
+000106   0140     movlb   0x00                 BANKSEL PULSE_H
+000107   00a1     movwf   0x21                 MOVWF   PULSE_H  
+                                               
+                                           ;   Reset counter    
+000108   0144     movlb   0x04                 BANKSEL TMR3H
+000109   0193     clrf    0x13                 CLRF    TMR3H         
+00010a   0192     clrf    0x12                 CLRF    TMR3L
+                                               
+00010b   0144     movlb   0x04                 BANKSEL T3CON
+00010c   1414     bsf     0x14, 0x0            BSF     T3CON, 0        ; restart Timer3 
+
+00010d   2113     call    0x0113               CALL convert_to_rpm
+00010e   0008     return                       RETURN
+                                               
+                                           fan_stopped
+00010f   0140     movlb   0x00                 BANKSEL TACH_RPMH
+000110   01a3     clrf    0x23                 CLRF    TACH_RPMH
+000111   01a2     clrf    0x22                 CLRF    TACH_RPML
+000112   0008     return                       RETURN
+                                               
+                                               
+                                           convert_to_rpm
+                                               
+                                               ; FAN MAX RATED SPEED 4800RPM +- 15%
+                                               ; Clear previous tach_rpm value
+000113   0140     movlb   0x00                 BANKSEL TACH_RPMH
+000114   01a3     clrf    0x23                 CLRF    TACH_RPMH       
+000115   01a2     clrf    0x22                 CLRF    TACH_RPML
+
+                                               ;x30 using repeated addition
+000116   0140     movlb   0x00                 BANKSEL LOOP_COUNT
+000117   301e     movlw   0x1e                 MOVLW   D'30'
+000118   00aa     movwf   0x2a                 MOVWF   LOOP_COUNT
+                                               
+                                           rpm_add
+000119   0140     movlb   0x00                 BANKSEL PULSE_L
+00011a   0820     movf    0x20, 0x0            MOVF    PULSE_L, W
+00011b   0140     movlb   0x00                 BANKSEL TACH_RPML
+00011c   07a2     addwf   0x22, 0x1            ADDWF   TACH_RPML, F   
+
+00011d   0140     movlb   0x00                 BANKSEL PULSE_H
+00011e   0821     movf    0x21, 0x0            MOVF    PULSE_H, W
+00011f   0140     movlb   0x00                 BANKSEL TACH_RPMH
+000120   3da3     addwfc  0x23, 0x1            ADDWFC  TACH_RPMH, F    
+
+000121   0140     movlb   0x00                 BANKSEL LOOP_COUNT
+000122   0baa     decfsz  0x2a, 0x1            DECFSZ  LOOP_COUNT, F 
+000123   2919     goto    0x0119               GOTO    rpm_add     ; skip if LOOP_count = 0
+                                               
+000124   0008     return                       RETURN
+
+                                               
+                                               #INCLUDE <timer.inc>
+                                           ;   Configure Timer1 16-bit for 1s Delay
+                                           ;   16-bit = 65,536 counts 
+                                           ;   OSC: 4MHz
+                                           ;   OSC/4 : 1MHz
+                                           ;   1:8 Prescalar: 125,000 Hz 
+                                           ;   Each timer1 increment = 8us
+                                           ;   Maximum time before overflow = 65,536 × 8µs = 524,288 µs
+                                           ;   
+                                           ;   Use 2 x 500,000us counts:
+                                           ;   500,000us = 62,500 counts
+                                           ;   Preload timer with 65,536 - 62,500 = 3,036
+                                           ;   After 2 overflows: 1s 
+
+                                           ;   REGISTERS
+                                           ;    
+                                           ;   T1CLK
+                                           ;	 Bit 3-0: 0001 (T1CS:FOSC/4)
+
+                                           ;   TMR1H:TMR1L (PRELOAD Timer) 
+                                           ;	TMR1H: 00001011
+                                           ;	TMR1L: 11011100 
+                                               
+                                           ;    PIR4   reset overflow flag
+                                           ;	Bit 0: 0  (0: No TMR1 overflow occurred, 1: No TMR1 overflow occurred)
+                                               
+                                           ;   T1CON
+                                           ;	 Bit 5-4: 11 (1:8 Prescaler)
+                                           ;	 Bit 0: 1 (ON)
+                                               
+
+                                           ;TIMER_OVERFLOW_COUNTER EQU 0x79
+                                           ;TIMER_TOGGLE EQU 0x7A
+                                               
+                                               
+                                           init_timer1
+                                               
+000125   0144     movlb   0x04                 BANKSEL T1CLK       
+000126   3001     movlw   0x01                 MOVLW   b'00000001'           
+000127   0091     movwf   0x11                 MOVWF   T1CLK
+                                              
+000128   300b     movlw   0x0b                 MOVLW   b'00001011' 
+000129   008d     movwf   0x0d                 MOVWF   TMR1H       
+00012a   30dc     movlw   0xdc                 MOVLW   b'11011100'       
+00012b   008c     movwf   0x0c                 MOVWF   TMR1L      
+                                               
+00012c   014e     movlb   0x0e                 BANKSEL PIR4        
+00012d   1010     bcf     0x10, 0x0            BCF     PIR4, 0     
+                                               
+00012e   0144     movlb   0x04                 BANKSEL T1CON   
+00012f   3031     movlw   0x31                 MOVLW  b'00110001'
+000130   008e     movwf   0x0e                 MOVWF   T1CON
+                                               
+                                           ;   Set counter and overflow counter = 0
+000131   0140     movlb   0x00                 BANKSEL TIMER_TOGGLE_BUZZER
+000132   01f9     clrf    0x79                 CLRF TIMER_TOGGLE_BUZZER
+000133   0140     movlb   0x00                 BANKSEL TIMER_TOGGLE_UART
+000134   01fa     clrf    0x7a                 CLRF TIMER_TOGGLE_UART
+000135   01f8     clrf    0x78                 CLRF TIMER_OVERFLOW_COUNTER
+                                               
+000136   0008     return                       RETURN
+                                               
+                                           timer1_run
+                                               ; Check for overflow
+000137   014e     movlb   0x0e                 BANKSEL PIR4        
+000138   1c10     btfss   0x10, 0x0            BTFSS   PIR4, 0    
+000139   0008     return                       RETURN				 ;no overflow, exit immediately
+                                               
+                                               ;After overflow, clear overflow flag and preload timer1 again
+00013a   1010     bcf     0x10, 0x0            BCF     PIR4, 0			; Clear the hardware flag so it can trigger again
+                                               
+                                           ;   28.6.1: Stop timer before preloading 
+00013b   0144     movlb   0x04                 BANKSEL T1CON
+00013c   100e     bcf     0x0e, 0x0            BCF     T1CON, 0			; ON: 0 (Timer1 stopped)
+                                               
+00013d   0144     movlb   0x04                 BANKSEL TMR1H
+00013e   300b     movlw   0x0b                 MOVLW   b'00001011' 
+00013f   008d     movwf   0x0d                 MOVWF   TMR1H       
+000140   30dc     movlw   0xdc                 MOVLW   b'11011100'       
+000141   008c     movwf   0x0c                 MOVWF   TMR1L    
+                                               
+                                           ;   Resume timer
+000142   0144     movlb   0x04                 BANKSEL T1CON
+000143   140e     bsf     0x0e, 0x0            BSF     T1CON, 0			; ON: 1
+
+000144   0140     movlb   0x00                 BANKSEL TIMER_OVERFLOW_COUNTER	; tracks number of overflows
+000145   0af8     incf    0x78, 0x1            INCF    TIMER_OVERFLOW_COUNTER, F    
+
+                                           ;   Check for 2 overflows
+000146   3002     movlw   0x02                 MOVLW   d'2'
+000147   0278     subwf   0x78, 0x0            SUBWF   TIMER_OVERFLOW_COUNTER, W	; 2 - TIMER_OVERFLOW_COUNTER
+000148   1d03     btfss   0x03, 0x2            BTFSS   STATUS, Z			; Z flag is set if the result is zero,
+000149   0008     return                       RETURN				; Not 2 overflows yet
+
+                                           ;   2 overflows 
+00014a   01f8     clrf    0x78                 CLRF    TIMER_OVERFLOW_COUNTER      ; Reset  oveflow counter
+00014b   0140     movlb   0x00                 BANKSEL TIMER_TOGGLE_BUZZER
+00014c   3001     movlw   0x01                 MOVLW   b'00000001'
+00014d   06f9     xorwf   0x79, 0x1            XORWF   TIMER_TOGGLE_BUZZER, F	; Toggle
+00014e   0140     movlb   0x00                 BANKSEL TIMER_TOGGLE_UART
+00014f   3001     movlw   0x01                 MOVLW   b'00000001'
+000150   06fa     xorwf   0x7a, 0x1            XORWF   TIMER_TOGGLE_UART, F	
+000151   0008     return                       RETURN             
+
+
+
+                                               
+                                               
+                                               #INCLUDE <uart.inc>
+                                           ; Transmission: 
+                                           ;  TX1REG (write buffer) to TSR (transmit shift register)
+                                           ;  TSR takes one bit from TX1REG, adds start and stop bit and?clocks each bit onto the TX pin at baud rate 
+                                               
+                                           ; Start bit (LOW), STOP bit (HIGH) 
+                                               
+                                           ;  Send "RPM=XXXX\r\n" where XXXX is the current RPM value.
+                                           ;  Called from main loop when TIMER_TOGGLE_UART != 0.
+                                           ;  Also turns the TX LED (RB2, active-high) on during transmission.
+                                                
+                                           ;  COnvert 16 bit RPM to 4 BCD digits 
+                                           ;  Repeated subtraction  
+                                           ;    1. Count how many times 1000 fits -> DIGIT_1000
+                                           ;	Subtract 1000
+                                           ;	Check if carry flag = 1
+                                           ;	    No: No borrow, increament 
+                                           ;	    Yea: undo last subtraction, decrement
+                                           ;    2. how many times  100 fits = DIGIT_100
+                                           ;    3. how many times   10 fits = DIGIT_10
+                                           ;    4. remainder         = DIGIT_1
+
+                                           ; Covert bin to ASCII : Add 0x30    
+                                               
+                                           ;   Fosc = 4MHz    
+                                           ;   SYNC =0
+                                           ;   high baud rate (BRGH = 1)
+                                           ;   16-bit BRG (BRG16 = 0) 
+                                               
+                                           ; Refer to Table 33-4   
+                                           ;   Baud Rate: 9600
+                                           ;   Actual rate 9615
+                                           ;   % error: 0.16
+                                           ;   SPBRG: d'25' 
+                                               
+                                            
+                                           ;   PIN	CONFIG
+                                           ;   PIC TX1: RC6 (connected to PC USB-serial adapter RXD)
+                                           ;   PIC RX1: RC7 (connected to PC USB-serial adapter TXD)
+                                               
+                                           ;   REGISTERS
+
+                                           ;   PPS Routing  
+                                           ;   RC6PPS   - PPS output register for RC6
+                                           ;	set to 0x10 = TX/CK
+                                           ;   RX1PPS   - PPS input register for RX1
+                                           ;	set to 0x17 = RC7
+
+                                           ;    SPBRG: 25 = 9600 baud at 4MHz with BRGH=1, BRG16=0
+                                           ;	SPBRGL = d'25'
+                                           ;	SPBRGH  = 0
+                                               
+                                           ;   TX1STA: TRANSMIT STATUS AND CONTROL REGISTER
+                                           ;	bit 5: 1 enabled TXEN: Transmit Enable bit
+                                           ;	bit 4: 0 asynchronous mode
+                                           ;	bit 2: 1 BRGH: High Baud Rate Select bit
+
+                                           ;    RC1STA: RECEIVE STATUS AND CONTROL REGISTER
+                                           ;	bit 7: 1 enabled SPEN: Serial Port Enable bit  (needed for Tx and Rx to operate)
+                                               
+                                                   
+                                               
+                                           init_uart
+
+                                              ; Unlock PPS 
+000152   017d     movlb   0x3d                 BANKSEL PPSLOCK
+000153   3055     movlw   0x55                 MOVLW   0x55
+000154   008f     movwf   0x0f                 MOVWF   PPSLOCK
+000155   30aa     movlw   0xaa                 MOVLW   0xAA
+000156   008f     movwf   0x0f                 MOVWF   PPSLOCK
+000157   100f     bcf     0x0f, 0x0            BCF     PPSLOCK, 0      ; Clear PPSLOCKED bit to enable PPS changes
+
+                                              ; Route UART TX to RC6 (PPS output)
+000158   017e     movlb   0x3e                 BANKSEL RC6PPS
+000159   3010     movlw   0x10                 MOVLW   0x10            ; 0x10 = TX/CK output (Table 13-3)
+00015a   00a6     movwf   0x26                 MOVWF   RC6PPS
+                                               
+
+                                              ; Lock PPS 
+00015b   017d     movlb   0x3d                 BANKSEL PPSLOCK
+00015c   3055     movlw   0x55                 MOVLW   0x55
+00015d   008f     movwf   0x0f                 MOVWF   PPSLOCK
+00015e   30aa     movlw   0xaa                 MOVLW   0xAA
+00015f   008f     movwf   0x0f                 MOVWF   PPSLOCK
+000160   140f     bsf     0x0f, 0x0            BSF     PPSLOCK, 0      ; Set PPSLOCKED bit to lock PPS settings
+
+
+                                               ; Baud rate = 9600 bps
+000161   0142     movlb   0x02                 BANKSEL SP1BRGL
+000162   3019     movlw   0x19                 MOVLW   D'25'
+000163   009b     movwf   0x1b                 MOVWF   SP1BRGL
+000164   019c     clrf    0x1c                 CLRF    SP1BRGH
+
+                                               ; TX1STA: bit5 TXEN=1, bit4 SYNC=0, bit2 BRGH=1
+000165   0142     movlb   0x02                 BANKSEL TX1STA
+000166   3024     movlw   0x24                 MOVLW   b'00100100'
+000167   009e     movwf   0x1e                 MOVWF   TX1STA
+
+                                               ; RC1STA: bit7 SPEN=1
+000168   0142     movlb   0x02                 BANKSEL RC1STA
+000169   3080     movlw   0x80                 MOVLW   b'10000000'
+00016a   009d     movwf   0x1d                 MOVWF   RC1STA
+00016b   0008     return                       RETURN
+                                               
+00016c   0142     movlb   0x02                 BANKSEL BAUD1CON
+00016d   119f     bcf     0x1f, 0x3            BCF     BAUD1CON, 3
+
+                                           uart_send_byte
+00016e   014e     movlb   0x0e                 BANKSEL PIR3
+                                               
+                                           uart_tx_wait
+                                               ; Double-buffering architecture
+                                               ; Check TXIF (EUSART Transmit Interrupt Flag (read-only) bit)
+                                               ; 0 = transmit buffer full , 1 = ready to accept next byte
+
+00016f   1e0f     btfss   0x0f, 0x4            BTFSS PIR3, 4 
+000170   296f     goto    0x016f               GOTO uart_tx_wait ;0
+                                               
+000171   0142     movlb   0x02                 BANKSEL TX1REG  ; holding register 33.1.1.2
+                                               ; load next byte for transmission while the hardware sends previous   
+                                               ; Clears TX1IF (because TX1REG is now occupied)
+000172   009a     movwf   0x1a                 MOVWF   TX1REG  
+                                               
+000173   0008     return                       RETURN
+                                               
+                                           uart_test
+000174   304d     movlw   0x4d                 MOVLW   'M'
+000175   216e     call    0x016e               CALL    uart_send_byte
+000176   3065     movlw   0x65                 MOVLW   'e'
+000177   216e     call    0x016e               CALL    uart_send_byte
+000178   3061     movlw   0x61                 MOVLW   'a'
+000179   216e     call    0x016e               CALL    uart_send_byte
+00017a   3073     movlw   0x73                 MOVLW   's'
+00017b   216e     call    0x016e               CALL    uart_send_byte
+00017c   3075     movlw   0x75                 MOVLW   'u'
+00017d   216e     call    0x016e               CALL    uart_send_byte
+00017e   3072     movlw   0x72                 MOVLW   'r'
+00017f   216e     call    0x016e               CALL    uart_send_byte
+000180   3069     movlw   0x69                 MOVLW   'i'
+000181   216e     call    0x016e               CALL    uart_send_byte
+000182   306e     movlw   0x6e                 MOVLW   'n'
+000183   216e     call    0x016e               CALL    uart_send_byte
+000184   3067     movlw   0x67                 MOVLW   'g'
+000185   216e     call    0x016e               CALL    uart_send_byte
+000186   3020     movlw   0x20                 MOVLW   0x20
+000187   216e     call    0x016e               CALL    uart_send_byte
+000188   3046     movlw   0x46                 MOVLW   'F'
+000189   216e     call    0x016e               CALL    uart_send_byte
+00018a   3061     movlw   0x61                 MOVLW   'a'
+00018b   216e     call    0x016e               CALL    uart_send_byte
+00018c   306e     movlw   0x6e                 MOVLW   'n'
+00018d   216e     call    0x016e               CALL    uart_send_byte
+00018e   3020     movlw   0x20                 MOVLW   0x20
+00018f   216e     call    0x016e               CALL    uart_send_byte
+000190   3053     movlw   0x53                 MOVLW   'S'
+000191   216e     call    0x016e               CALL    uart_send_byte
+000192   3070     movlw   0x70                 MOVLW   'p'
+000193   216e     call    0x016e               CALL    uart_send_byte
+000194   3065     movlw   0x65                 MOVLW   'e'
+000195   216e     call    0x016e               CALL    uart_send_byte
+000196   3065     movlw   0x65                 MOVLW   'e'
+000197   216e     call    0x016e               CALL    uart_send_byte
+000198   3064     movlw   0x64                 MOVLW   'd'
+000199   216e     call    0x016e               CALL    uart_send_byte
+
+                                               
+                                               ; Send line end '\r\n'
+00019a   300d     movlw   0x0d                 MOVLW   0x0D            
+00019b   216e     call    0x016e               CALL    uart_send_byte
+00019c   300a     movlw   0x0a                 MOVLW   0x0A           
+00019d   216e     call    0x016e               CALL    uart_send_byte
+                                           uart_send_rpm
+                                               
+00019e   0140     movlb   0x00                 BANKSEL TIMER_TOGGLE_UART
+00019f   1c7a     btfss   0x7a, 0x0            BTFSS   TIMER_TOGGLE_UART, 0    
+0001a0   0008     return                       RETURN ;  1 sec did not pass
+                                               
+                                               ;Yes - 1s passed
+                                               ; turn on led
+0001a1   0140     movlb   0x00                 BANKSEL LATB
+0001a2   1517     bsf     0x17, 0x2            BSF     LATB, 2
+                                               
+                                               ; Convert RPM (16bit) to 4 BCD digits
+0001a3   21c5     call    0x01c5               CALL rpm_to_BCD
+                                               
+                                               ; SEND 'R' 'P' 'M' '=' (ASCII)
+0001a4   3052     movlw   0x52                 MOVLW   'R'
+0001a5   216e     call    0x016e               CALL    uart_send_byte
+0001a6   3050     movlw   0x50                 MOVLW   'P'
+0001a7   216e     call    0x016e               CALL    uart_send_byte
+0001a8   304d     movlw   0x4d                 MOVLW   'M'
+0001a9   216e     call    0x016e               CALL    uart_send_byte
+0001aa   303d     movlw   0x3d                 MOVLW   '='
+0001ab   216e     call    0x016e               CALL    uart_send_byte
+                                               
+                                               
+                                               ; SEND 4 BCD digits as ACSII (add 0x30)
+0001ac   0140     movlb   0x00                 BANKSEL DIGIT_1000
+0001ad   0826     movf    0x26, 0x0            MOVF    DIGIT_1000, W
+0001ae   3e30     addlw   0x30                 ADDLW   0x30
+0001af   216e     call    0x016e               CALL    uart_send_byte
+                                            
+0001b0   0140     movlb   0x00                 BANKSEL DIGIT_100
+0001b1   0827     movf    0x27, 0x0            MOVF    DIGIT_100, W
+0001b2   3e30     addlw   0x30                 ADDLW   0x30
+0001b3   216e     call    0x016e               CALL    uart_send_byte
+                                            
+0001b4   0140     movlb   0x00                 BANKSEL DIGIT_10
+0001b5   0828     movf    0x28, 0x0            MOVF    DIGIT_10, W
+0001b6   3e30     addlw   0x30                 ADDLW   0x30
+0001b7   216e     call    0x016e               CALL    uart_send_byte
+                                            
+0001b8   0140     movlb   0x00                 BANKSEL DIGIT_1
+0001b9   0829     movf    0x29, 0x0            MOVF    DIGIT_1, W
+0001ba   3e30     addlw   0x30                 ADDLW   0x30
+0001bb   216e     call    0x016e               CALL    uart_send_byte
+                                               
+                                               ; Send line end '\r\n'
+0001bc   300d     movlw   0x0d                 MOVLW   0x0D            
+0001bd   216e     call    0x016e               CALL    uart_send_byte
+0001be   300a     movlw   0x0a                 MOVLW   0x0A           
+0001bf   216e     call    0x016e               CALL    uart_send_byte
+
+
+                                               ; Turn off led 
+0001c0   0140     movlb   0x00                 BANKSEL LATB
+0001c1   1117     bcf     0x17, 0x2            BCF     LATB, 2
+
+                                           ;    clear TIMER_toggle
+0001c2   0140     movlb   0x00                 BANKSEL TIMER_TOGGLE_UART
+0001c3   01fa     clrf    0x7a                 CLRF    TIMER_TOGGLE_UART
+
+0001c4   0008     return                       RETURN
+
+                                            
+
+                                               
+                                           rpm_to_BCD
+                                               
+0001c5   0140     movlb   0x00                 BANKSEL TACH_RPMH 
+                                               ; Clear BCD digit registers
+0001c6   0140     movlb   0x00                 BANKSEL DIGIT_1000
+0001c7   01a6     clrf    0x26                 CLRF    DIGIT_1000
+0001c8   01a7     clrf    0x27                 CLRF    DIGIT_100
+0001c9   01a8     clrf    0x28                 CLRF    DIGIT_10
+0001ca   01a9     clrf    0x29                 CLRF    DIGIT_1
+                                               
+                                               
+                                               ;Store in temp registers
+0001cb   0823     movf    0x23, 0x0            MOVF    TACH_RPMH, W
+0001cc   00a5     movwf   0x25                 MOVWF   TACH_toBCDH
+0001cd   0822     movf    0x22, 0x0            MOVF    TACH_RPML, W
+0001ce   00a4     movwf   0x24                 MOVWF   TACH_toBCDL
+                                               
+                                               
+                                           ; Thousands
+                                               
+                                           ;   LOW(D'1000') = 232 (0xE8)
+                                           ;   HIGH(D'1000') = 768 (0x03)
+                                           div_1000    
+0001cf   30e8     movlw   0xe8                 MOVLW   LOW(D'1000')
+0001d0   02a4     subwf   0x24, 0x1            SUBWF   TACH_toBCDL, F
+0001d1   3003     movlw   0x03                 MOVLW   HIGH(D'1000')
+0001d2   3ba5     subwfb  0x25, 0x1            SUBWFB  TACH_toBCDH, F      ; Subtract high byte, check if the previous  needed a borrow
+                                               
+0001d3   1c03     btfss   0x03, 0x0            BTFSS   STATUS, C           ; Check carry flag STATUS reg (C=0 means borrow/negative, c=1 subtraction succsessful)
+0001d4   29d7     goto    0x01d7               GOTO    div_1000_undo	; 0 
+0001d5   0aa6     incf    0x26, 0x1            INCF    DIGIT_1000, F	; 1 increment
+0001d6   29cf     goto    0x01cf               GOTO    div_1000
+
+                                               
+                                           div_1000_undo  ; undo final subtraction
+0001d7   30e8     movlw   0xe8                 MOVLW   LOW(D'1000')      
+0001d8   07a4     addwf   0x24, 0x1            ADDWF   TACH_toBCDL, F
+0001d9   3003     movlw   0x03                 MOVLW   HIGH(D'1000')
+0001da   3da5     addwfc  0x25, 0x1            ADDWFC  TACH_toBCDH, F      ; Add with carry
+                                               
+                                           ; Hundreds
+                                              
+                                           div_100    
+0001db   3064     movlw   0x64                 MOVLW   LOW(D'100')
+0001dc   02a4     subwf   0x24, 0x1            SUBWF   TACH_toBCDL, F
+0001dd   3000     movlw   0x00                 MOVLW   HIGH(D'100')
+0001de   3ba5     subwfb  0x25, 0x1            SUBWFB  TACH_toBCDH, F      
+                                               
+0001df   1c03     btfss   0x03, 0x0            BTFSS   STATUS, C            
+0001e0   29e3     goto    0x01e3               GOTO    div_100_undo	; 0 
+0001e1   0aa7     incf    0x27, 0x1            INCF    DIGIT_100, F	; 1 increment
+0001e2   29db     goto    0x01db               GOTO    div_100
+                                               
+                                           div_100_undo  
+0001e3   3064     movlw   0x64                 MOVLW   LOW(D'100')      
+0001e4   07a4     addwf   0x24, 0x1            ADDWF   TACH_toBCDL, F
+0001e5   3000     movlw   0x00                 MOVLW   HIGH(D'100')
+0001e6   3da5     addwfc  0x25, 0x1            ADDWFC  TACH_toBCDH, F    
+                                               
+                                           ; Tens
+                                               
+                                           div_10
+0001e7   300a     movlw   0x0a                 MOVLW   D'10'
+0001e8   02a4     subwf   0x24, 0x1            SUBWF   TACH_toBCDL, F
+0001e9   3000     movlw   0x00                 MOVLW   D'0'
+0001ea   3ba5     subwfb  0x25, 0x1            SUBWFB  TACH_toBCDH, F      ; 16-bit subtraction for the 10s too
+                                               
+0001eb   1c03     btfss   0x03, 0x0            BTFSS   STATUS, C
+0001ec   29ef     goto    0x01ef               GOTO    div_10_undo
+                                               
+0001ed   0aa8     incf    0x28, 0x1            INCF    DIGIT_10, F
+0001ee   29e7     goto    0x01e7               GOTO    div_10
+                                               
+                                           div_10_undo
+0001ef   300a     movlw   0x0a                 MOVLW   D'10'
+0001f0   07a4     addwf   0x24, 0x1            ADDWF   TACH_toBCDL, F
+0001f1   3000     movlw   0x00                 MOVLW   D'0'
+0001f2   3da5     addwfc  0x25, 0x1            ADDWFC  TACH_toBCDH, F
+                                            
+                                           ;   Ones   
+0001f3   0140     movlb   0x00                 BANKSEL TACH_toBCDL
+0001f4   0824     movf    0x24, 0x0            MOVF    TACH_toBCDL, W
+0001f5   0140     movlb   0x00                 BANKSEL DIGIT_1
+0001f6   00a9     movwf   0x29                 MOVWF   DIGIT_1
+                                               
+0001f7   0008     return                       RETURN
+                                               
+                                               
+                                               
+                                               
+                                               
+                                           	
+
+                                           begin
+0001f8   2049     call    0x0049               CALL    init_ports      
+0001f9   2001     call    0x0001               CALL    init_adc        
+0001fa   201b     call    0x001b               CALL    init_buzzer_PWM
+0001fb   2125     call    0x0125               CALL    init_timer1
+0001fc   207e     call    0x007e               CALL    init_fanspeed_PWM
+0001fd   20d8     call    0x00d8               CALL    init_tach
+0001fe   2152     call    0x0152               CALL    init_uart
+                                               
+0001ff   0140     movlb   0x00                 BANKSEL MODE
+000200   01fb     clrf    0x7b                 CLRF    MODE            ; Default to DIP Switch mode (0)
+000201   01f4     clrf    0x74                 CLRF    SEVEN_SEG_4BIT
+                                               
+000202   0140     movlb   0x00                 BANKSEL LATB
+000203   1017     bcf     0x17, 0x0            BCF     LATB, 0         ; Status LED ON (Active-Low for DIP Mode)
+                                               
+000204   2174     call    0x0174               CALL    uart_test       ;Test UART Ouptut "Measuring Fan Speed" 
+
+                                               
+                                               
+                                               
+                                               
+                                           MAIN_LOOP
+
+000205   20bd     call    0x00bd               CALL    check_reset	    ; emergency reset
+000206   2009     call    0x0009               CALL    adc_convert     ; POT to 10-bit (Left justified to 8-bit)
+000207   2013     call    0x0013               CALL    adc_4bit        ; 8-bit ADRESH to 4-bit
+000208   2077     call    0x0077               CALL    read_dip        ; Read PORTC and process DIP_4BIT
+000209   20a0     call    0x00a0               CALL    press_button    ; Check RE1 for mode toggle
+00020a   20af     call    0x00af               CALL    mode_select     ; Select between ADC_4BIT and DIP_4BIT
+00020b   20c1     call    0x00c1               CALL    disp_seven_seg  ; Update 7-segment display
+00020c   2137     call    0x0137               CALL    timer1_run	    ; TIMER_TOGGLE (BUZZER and UART) from 0 to 1 every second
+00020d   2032     call    0x0032               CALL    check_alarmState; Check if ADC_4BIT >= 12
+00020e   2097     call    0x0097               CALL    adjust_fanspeed ; ADRESH to CCPR2H, ADRESL to CCPR2L to modify pulse width
+00020f   20f9     call    0x00f9               CALL    get_fan_speed   ; Count pulses in 1 second (RPS) and convert to RPM 
+000210   219e     call    0x019e               CALL    uart_send_rpm   ; Convert RPM to BCD, Sends "RPM=XXXX\r\n" and clears TIMER_TOGGLE_UART
+                                               
+000211   2a05     goto    0x0205               GOTO    MAIN_LOOP       
+                                               
+                                               END

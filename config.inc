@@ -1,21 +1,24 @@
 ;   PIN ASSIGNMENT
 ;   TRISx: Input (1), Output (0)
 ;   ANSELx: Analog (1), Digital (0) 
-;   PORTA 
+; PORTA 
 ;	RA0 - Input (Analog) : ADC Channel 0
+;	RA4 - Input (Digital): Tachometer (MOVED FROM RC0)
+
 ;   PORTB
 ;	RB0 - Output (Digital): Active-low LED (RED) : DIP - ON, ADC - OFF
 ;	RB1 - Output (Digital): Active-high LED (YELLOW) : Alarm - ON    
 ;	RB2 - Output (Digital): Active-high LED (GREEN) : Transmitting - ON    
 ;	RB5 - Output (Dgital): Buzzer
 ;   PORTC
-;	RC0 - Input : tachymeter
+;	
 ;	RC1 - Output : PWM fan speed and 7 SEG brightness 
 ;	RC2 - Input (Digital): DIP Pin 1 (LSB)
 ;	RC3 - Input (Digital): DIP Pin 2  
 ;	RC4 - Input (Digital): DIP Pin 3     
 ;	RC5 - Input (Digital): DIP Pin 4 (MSB)
-;	RC6 - Ouput (Digital): UART TX
+;	RC6 - Output (Digital): UART TX (To USB RXD)
+;	RC7 - Input (Digital): UART RX (From USB TXD)
 ;   PORTD
 ;	RD0 - Output (Digital): 7-SEG A	
 ;	RD1 - Output (Digital): 7-SEG B
@@ -26,7 +29,7 @@
 ;	RD6 - Output (Digital): 7-SEG G
 ;	RD7 - Output (Digital): 7-SEG DP
 ;   PORTE
-;	RE0 - Input (Digital): 
+;	RE0 - Input (Digital): Reset
 ;	RE1 - Input (Digital): Active-low Control Mode Select
     
     
@@ -34,9 +37,11 @@
 init_ports    
 ;   PORTA
     BANKSEL TRISA
-    BSF TRISA,0		; Set RA0 to input
+    MOVLW B'00010001'	; Set RA0, RA4
+    MOVWF TRISA
     BANKSEL ANSELA
-    BSF ANSELA, 0	; Set RA0 to analog
+    MOVLW B'00000001'    ; RA0=1 (analog), RA4 digital
+    MOVWF ANSELA         ; 
 
 ;   PORT B
     BANKSEL LATB

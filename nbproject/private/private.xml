@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project-private xmlns="http://www.netbeans.org/ns/project-private/1">
+    <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
+    <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
+        <group>
+            <file>file:/C:/Mac/Home/Documents/PeripheralSystem.X/delays.inc</file>
+            <file>file:/C:/Mac/Home/Documents/PeripheralSystem.X/main.asm</file>
+            <file>file:/C:/Mac/Home/Documents/PeripheralSystem.X/buzzer.inc</file>
+            <file>file:/C:/Mac/Home/Documents/PeripheralSystem.X/uart.inc</file>
+            <file>file:/C:/Mac/Home/Documents/PeripheralSystem.X/tach.inc</file>
+            <file>file:/C:/Mac/Home/Documents/PeripheralSystem.X/config.inc</file>
+            <file>file:/C:/Mac/Home/Documents/PeripheralSystem.X/seven_seg_disp.inc</file>
+            <file>file:/C:/Mac/Home/Documents/PeripheralSystem.X/timer.inc</file>
+            <file>file:/C:/Mac/Home/Documents/PeripheralSystem.X/adc.inc</file>
+            <file>file:/C:/Mac/Home/Documents/PeripheralSystem.X/fanspeed.inc</file>
+        </group>
+    </open-files>
+</project-private>
